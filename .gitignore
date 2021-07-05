@@ -17,3 +17,5 @@
 .idea/
 
 conf/*.ini
+
+Dockerfile
