@@ -1,4 +1,4 @@
-package middleware
+package jwt
 
 import (
 	"github.com/chenobdo/go-gin-example/pkg/e"

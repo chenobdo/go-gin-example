@@ -51,5 +51,4 @@ func init() {
 	// table name 不加s
 	db.SingularTable(true)
 	db.LogMode(true)
-
 }
