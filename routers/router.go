@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/chenobdo/go-gin-example/pkg/setting"
+	"github.com/chenobdo/go-gin-example/routers/api"
 	v1 "github.com/chenobdo/go-gin-example/routers/v1"
 	"github.com/gin-gonic/gin"
 )
@@ -19,6 +20,8 @@ func InitRoute() *gin.Engine {
 			"message": "ping success",
 		})
 	})
+
+	r.GET("/auth", api.GetAuth)
 
 	apiv1 := r.Group("/api/v1")
 	{
