@@ -1,11 +1,5 @@
 package models
 
-import (
-	"github.com/jinzhu/gorm"
-	"log"
-	"time"
-)
-
 type Tag struct {
 	Model
 
@@ -15,25 +9,25 @@ type Tag struct {
 	State      int    `json:"state"`
 }
 
-func (tag *Tag) BeforeCreate(scope *gorm.Scope) error {
-	err := scope.SetColumn("CreatedOn", time.Now().Unix())
-	if err != nil {
-		log.Fatalf("Fail to set tag column before create, %v", err)
-		return err
-	}
+//func (tag *Tag) BeforeCreate(scope *gorm.Scope) error {
+//	err := scope.SetColumn("CreatedOn", time.Now().Unix())
+//	if err != nil {
+//		log.Fatalf("Fail to set tag column before create, %v", err)
+//		return err
+//	}
+//
+//	return nil
+//}
 
-	return nil
-}
-
-func (tag *Tag) BeforeUpdate(scope *gorm.Scope) error {
-	err := scope.SetColumn("ModifiedOn", time.Now().Unix())
-	if err != nil {
-		log.Fatalf("Fail to set tag column before update, %v", err)
-		return err
-	}
-
-	return nil
-}
+//func (tag *Tag) BeforeUpdate(scope *gorm.Scope) error {
+//	err := scope.SetColumn("ModifiedOn", time.Now().Unix())
+//	if err != nil {
+//		log.Fatalf("Fail to set tag column before update, %v", err)
+//		return err
+//	}
+//
+//	return nil
+//}
 
 func GetTags(pageNum int, pageSize int, maps interface{}) (tags []Tag) {
 	db.Where(maps).Offset(pageNum).Limit(pageSize).Find(&tags)
@@ -83,6 +77,12 @@ func EditTag(id int, data interface{}) bool {
 
 func DeleteTag(id int) bool {
 	db.Where("id = ?", id).Delete(&Tag{})
+
+	return true
+}
+
+func CleanAllTag() bool {
+	db.Unscoped().Where("deleted_on != ?", 0).Delete(&Tag{})
 
 	return true
 }
