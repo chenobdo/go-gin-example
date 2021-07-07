@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/chenobdo/go-gin-example/models"
+	"github.com/chenobdo/go-gin-example/pkg/gredis"
 	"github.com/chenobdo/go-gin-example/pkg/logging"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/routers"
@@ -83,6 +84,7 @@ func main() {
 	setting.Setup()
 	models.Setup()
 	logging.Setup()
+	gredis.Setup()
 
 	endless.DefaultReadTimeOut = setting.ServerSetting.ReadTimeout
 	endless.DefaultWriteTimeOut = setting.ServerSetting.WriteTimeout
