@@ -193,6 +193,9 @@ func EditArticle(c *gin.Context) {
 				data["modified_by"] = modifiedBy
 
 				models.EditArticle(id, data)
+
+				// TODO此处需要删除缓存
+
 				code = e.SUCCESS
 			} else {
 				code = e.ERROR_NOT_EXIST_TAG

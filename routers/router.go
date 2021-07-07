@@ -2,6 +2,7 @@ package routers
 
 import (
 	_ "github.com/chenobdo/go-gin-example/docs"
+	"github.com/chenobdo/go-gin-example/pkg/export"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/pkg/upload"
 	"github.com/chenobdo/go-gin-example/routers/api"
@@ -27,6 +28,7 @@ func InitRoute() *gin.Engine {
 	})
 
 	r.StaticFS("/upload/images", http.Dir(upload.GetImageFullPath()))
+	r.StaticFS("/export", http.Dir(export.GetExcelFullPath()))
 
 	r.GET("/auth", api.GetAuth)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -43,6 +45,8 @@ func InitRoute() *gin.Engine {
 		apiv1.PUT("/tags/:id", v1.EditTag)
 		//删除指定标签
 		apiv1.DELETE("/tags/:id", v1.DeleteTag)
+		//导出标签
+		apiv1.POST("/tags/export", v1.ExportTag)
 
 		//获取文章列表
 		apiv1.GET("/articles", v1.GetArticles)

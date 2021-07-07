@@ -5,6 +5,7 @@ import (
 	"github.com/chenobdo/go-gin-example/app"
 	"github.com/chenobdo/go-gin-example/models"
 	"github.com/chenobdo/go-gin-example/pkg/e"
+	"github.com/chenobdo/go-gin-example/pkg/export"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/pkg/util"
 	"github.com/chenobdo/go-gin-example/service/tag_service"
@@ -12,6 +13,30 @@ import (
 	"github.com/unknwon/com"
 	"net/http"
 )
+
+func ExportTag(c *gin.Context) {
+	appG := app.Gin{C: c}
+	name := c.PostForm("name")
+	state := -1
+	if arg := c.PostForm("state"); arg != "" {
+		state = com.StrTo(arg).MustInt()
+	}
+
+	tagService := tag_service.Tag{
+		Name:  name,
+		State: state,
+	}
+
+	fileName, err := tagService.Export()
+	if err != nil {
+		appG.Response(http.StatusOK, e.ERROR_EXPORT_TAG_FAIL, nil)
+	}
+
+	appG.Response(http.StatusOK, e.SUCCESS, map[string]string{
+		"export_url":      export.GetExcelFullUrl(fileName),
+		"export_save_url": export.GetExcelPath() + fileName,
+	})
+}
 
 // GetTags 获取多个文章标签
 // @Summary Get multiple tags
@@ -38,9 +63,9 @@ func GetTags(c *gin.Context) {
 	}
 
 	tagService := tag_service.Tag{
-		Name: c.Query("name"),
-		State: state,
-		PageNum: util.GetPage(c),
+		Name:     c.Query("name"),
+		State:    state,
+		PageNum:  util.GetPage(c),
 		PageSize: setting.AppSetting.PageSize,
 	}
 
@@ -92,7 +117,7 @@ func AddTag(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": code,
-		"msg": e.GetMsg(code),
+		"msg":  e.GetMsg(code),
 		"data": make(map[string]string),
 	})
 }
@@ -136,15 +161,18 @@ func EditTag(c *gin.Context) {
 			}
 
 			models.EditTag(id, data)
+
+			// TODO此处需要删除缓存
+
 		} else {
 			code = e.ERROR_NOT_EXIST_TAG
 		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code" : code,
-		"msg" : e.GetMsg(code),
-		"data" : make(map[string]string),
+		"code": code,
+		"msg":  e.GetMsg(code),
+		"data": make(map[string]string),
 	})
 }
 
@@ -156,7 +184,7 @@ func DeleteTag(c *gin.Context) {
 	valid.Min(id, 1, "id").Message("ID必须大于0")
 
 	code := e.INVALID_PARAMS
-	if ! valid.HasErrors() {
+	if !valid.HasErrors() {
 		code = e.SUCCESS
 		if models.ExistTagByID(id) {
 			models.DeleteTag(id)
@@ -166,8 +194,8 @@ func DeleteTag(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code" : code,
-		"msg" : e.GetMsg(code),
-		"data" : make(map[string]string),
+		"code": code,
+		"msg":  e.GetMsg(code),
+		"data": make(map[string]string),
 	})
 }
