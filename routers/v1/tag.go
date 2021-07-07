@@ -6,6 +6,7 @@ import (
 	"github.com/chenobdo/go-gin-example/models"
 	"github.com/chenobdo/go-gin-example/pkg/e"
 	"github.com/chenobdo/go-gin-example/pkg/export"
+	"github.com/chenobdo/go-gin-example/pkg/logging"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/pkg/util"
 	"github.com/chenobdo/go-gin-example/service/tag_service"
@@ -13,6 +14,25 @@ import (
 	"github.com/unknwon/com"
 	"net/http"
 )
+
+func ImportTag(c *gin.Context) {
+	appG := app.Gin{C: c}
+
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		logging.Warn(err)
+		appG.Response(http.StatusOK, e.ERROR, nil)
+	}
+
+	tagService := tag_service.Tag{}
+	err = tagService.Import(file)
+	if err != nil {
+		logging.Warn(err)
+		appG.Response(http.StatusOK, e.ERROR_IMPORT_TAG_FAIL, nil)
+	}
+
+	appG.Response(http.StatusOK, e.SUCCESS, nil)
+}
 
 func ExportTag(c *gin.Context) {
 	appG := app.Gin{C: c}

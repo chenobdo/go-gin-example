@@ -2,10 +2,16 @@ package article_service
 
 import (
 	"encoding/json"
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/chenobdo/go-gin-example/models"
+	"github.com/chenobdo/go-gin-example/pkg/export"
 	"github.com/chenobdo/go-gin-example/pkg/gredis"
 	"github.com/chenobdo/go-gin-example/pkg/logging"
 	"github.com/chenobdo/go-gin-example/service/cache_service"
+	"github.com/tealeg/xlsx"
+	"io"
+	"strconv"
+	"time"
 )
 
 type Article struct {
@@ -21,6 +27,91 @@ type Article struct {
 
 	PageNum  int
 	PageSize int
+}
+
+func (a *Article) Import(r io.Reader) error {
+	xlsx, err := excelize.OpenReader(r)
+	if err != nil {
+		return err
+	}
+
+	rows := xlsx.GetRows("文章信息")
+	for irow, row := range rows {
+		if irow > 0 {
+			data := make(map[string]interface{})
+			data["tag_id"] = 0
+			data["title"] = row[1]
+			data["desc"] = row[2]
+			data["content"] = row[3]
+			data["created_by"] = row[5]
+			state, _ := strconv.Atoi(row[8])
+			data["state"] = state
+
+			models.AddArticle(data)
+		}
+	}
+
+	return nil
+}
+
+func (a *Article) Export() (string, error) {
+	articles, err := a.GetAll()
+	if err != nil {
+		return "", err
+	}
+
+	file := xlsx.NewFile()
+	sheet, err := file.AddSheet("文章信息")
+	if err != nil {
+		return "", err
+	}
+
+	titles := []string{"ID", "文章标题", "简述", "内容", "创建时间", "创建人", "修改时间", "修改人", "状态"}
+	row := sheet.AddRow()
+
+	var cell *xlsx.Cell
+	for _, title := range titles {
+		cell = row.AddCell()
+		cell.Value = title
+	}
+
+	for _, v := range articles {
+		values := []string{
+			strconv.Itoa(v.ID),
+			v.Title,
+			v.Desc,
+			v.Content,
+			strconv.Itoa(v.CreatedOn),
+			v.CreatedBy,
+			strconv.Itoa(v.ModifiedOn),
+			v.ModifiedBy,
+			strconv.Itoa(v.State),
+		}
+
+		row = sheet.AddRow()
+		for _, value := range values {
+			cell = row.AddCell()
+			cell.Value = value
+		}
+	}
+
+	timestamp := strconv.Itoa(int(time.Now().Unix()))
+	fileName := "articles-" + timestamp + ".xlsx"
+
+	fullPath := export.GetExcelFullPath() + fileName
+
+	err = export.CheckDir(export.GetExcelFullPath())
+	if err != nil {
+		logging.Warn(err)
+		return "", err
+	}
+
+	err = file.Save(fullPath)
+	if err != nil {
+		return "", err
+	}
+
+	return fileName, nil
 }
 
 func (a *Article) ExistByID() (bool, error) {
@@ -51,7 +142,7 @@ func (a *Article) Get() (*models.Article, error) {
 	return article, nil
 }
 
-func (a *Article) GetAll() ([]*models.Article, error){
+func (a *Article) GetAll() ([]*models.Article, error) {
 	var (
 		articles, cacheArticles []*models.Article
 	)
@@ -60,7 +151,7 @@ func (a *Article) GetAll() ([]*models.Article, error){
 		TagID: a.TagID,
 		State: a.State,
 
-		PageNum: a.PageNum,
+		PageNum:  a.PageNum,
 		PageSize: a.PageSize,
 	}
 

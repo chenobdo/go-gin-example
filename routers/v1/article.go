@@ -5,6 +5,8 @@ import (
 	"github.com/chenobdo/go-gin-example/app"
 	"github.com/chenobdo/go-gin-example/models"
 	"github.com/chenobdo/go-gin-example/pkg/e"
+	"github.com/chenobdo/go-gin-example/pkg/export"
+	"github.com/chenobdo/go-gin-example/pkg/logging"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/pkg/util"
 	"github.com/chenobdo/go-gin-example/service/article_service"
@@ -13,6 +15,52 @@ import (
 	"log"
 	"net/http"
 )
+
+func ImportArticle(c *gin.Context) {
+	appG := app.Gin{C: c}
+
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		logging.Warn(err)
+		appG.Response(http.StatusOK, e.ERROR, nil)
+	}
+
+	articleService := article_service.Article{}
+	err = articleService.Import(file)
+	if err != nil {
+		logging.Warn(err)
+		appG.Response(http.StatusOK, e.ERROR_IMPORT_ARTICLE_FAIL, nil)
+	}
+
+	appG.Response(http.StatusOK, e.SUCCESS, nil)
+}
+
+func ExportArticle(c *gin.Context) {
+	appG := app.Gin{C: c}
+	var state = -1
+	if arg := c.Query("state"); arg != "" {
+		state = com.StrTo(arg).MustInt()
+	}
+	var tagId = -1
+	if arg := c.Query("tag_id"); arg != "" {
+		tagId = com.StrTo(arg).MustInt()
+	}
+
+	articleService := article_service.Article{
+		TagID: tagId,
+		State: state,
+	}
+
+	fileName, err := articleService.Export()
+	if err != nil {
+		appG.Response(http.StatusOK, e.ERROR_EXPORT_ARTICLE_FAIL, nil)
+	}
+
+	appG.Response(http.StatusOK, e.SUCCESS, map[string]string{
+		"export_url":      export.GetExcelFullUrl(fileName),
+		"export_save_url": export.GetExcelPath() + fileName,
+	})
+}
 
 // GetArticle 获取单个文章
 func GetArticle(c *gin.Context) {

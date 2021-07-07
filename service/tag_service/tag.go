@@ -2,12 +2,14 @@ package tag_service
 
 import (
 	"encoding/json"
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/chenobdo/go-gin-example/models"
 	"github.com/chenobdo/go-gin-example/pkg/export"
 	"github.com/chenobdo/go-gin-example/pkg/gredis"
 	"github.com/chenobdo/go-gin-example/pkg/logging"
 	"github.com/chenobdo/go-gin-example/service/cache_service"
 	"github.com/tealeg/xlsx"
+	"io"
 	"strconv"
 	"time"
 )
@@ -21,6 +23,27 @@ type Tag struct {
 
 	PageNum  int
 	PageSize int
+}
+
+func (t *Tag) Import(r io.Reader) error {
+	xlsx, err := excelize.OpenReader(r)
+	if err != nil {
+		return err
+	}
+
+	rows := xlsx.GetRows("标签信息")
+	for irow, row := range rows {
+		if irow > 0 {
+			var data []string
+			for _, cell := range row {
+				data = append(data, cell)
+			}
+
+			models.AddTag(data[1], 1, data[2])
+		}
+	}
+
+	return nil
 }
 
 func (t *Tag) Count() (int, error) {
@@ -45,7 +68,10 @@ func (t *Tag) GetAll() ([]*models.Tag, error) {
 		if err != nil {
 			logging.Info(err)
 		} else {
-			json.Unmarshal(data, &cacheTags)
+			err := json.Unmarshal(data, &cacheTags)
+			if err != nil {
+				return nil, err
+			}
 			return cacheTags, nil
 		}
 	}
@@ -55,7 +81,10 @@ func (t *Tag) GetAll() ([]*models.Tag, error) {
 		return nil, err
 	}
 
-	gredis.Set(key, tags, 3600)
+	err = gredis.Set(key, tags, 3600)
+	if err != nil {
+		return nil, err
+	}
 	return tags, nil
 }
 

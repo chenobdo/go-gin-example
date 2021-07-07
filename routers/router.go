@@ -47,6 +47,8 @@ func InitRoute() *gin.Engine {
 		apiv1.DELETE("/tags/:id", v1.DeleteTag)
 		//导出标签
 		apiv1.POST("/tags/export", v1.ExportTag)
+		//导入标签
+		apiv1.POST("/tags/import", v1.ImportTag)
 
 		//获取文章列表
 		apiv1.GET("/articles", v1.GetArticles)
@@ -58,6 +60,10 @@ func InitRoute() *gin.Engine {
 		apiv1.PUT("/articles/:id", v1.EditArticle)
 		//删除指定文章
 		apiv1.DELETE("/articles/:id", v1.DeleteArticle)
+		//导出文章
+		apiv1.POST("/articles/export", v1.ExportArticle)
+		//导入文章
+		apiv1.POST("/articles/import", v1.ImportArticle)
 	}
 
 	return r
