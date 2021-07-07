@@ -2,42 +2,63 @@ package v1
 
 import (
 	"github.com/astaxie/beego/validation"
+	"github.com/chenobdo/go-gin-example/app"
 	"github.com/chenobdo/go-gin-example/models"
 	"github.com/chenobdo/go-gin-example/pkg/e"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/pkg/util"
+	"github.com/chenobdo/go-gin-example/service/tag_service"
 	"github.com/gin-gonic/gin"
 	"github.com/unknwon/com"
 	"net/http"
 )
 
 // GetTags 获取多个文章标签
+// @Summary Get multiple tags
+// @Produce  json
+// @Param name body int false "Name"
+// @Param state body int false "State"
+// @Success 200 {object} app.Response
+// @Failure 500 {object} app.Response
+// @Router /api/v1/tags [get]
 func GetTags(c *gin.Context) {
-	name := c.Query("name")
-
-	maps := make(map[string]interface{})
-	data := make(map[string]interface{})
-
-	if name != "" {
-		maps["name"] = name
-	}
+	appG := app.Gin{C: c}
+	valid := validation.Validation{}
 
 	var state = -1
 	if arg := c.Query("state"); arg != "" {
 		state = com.StrTo(arg).MustInt()
-		maps["state"] = state
+		valid.Range(state, 0, 1, "state").Message("状态只允许0或1")
 	}
 
-	code := e.SUCCESS
+	if valid.HasErrors() {
+		app.MarkErrors(valid.Errors)
+		appG.Response(http.StatusOK, e.INVALID_PARAMS, nil)
+		return
+	}
 
-	data["lists"] = models.GetTags(util.GetPage(c), setting.AppSetting.PageSize, maps)
-	data["total"] = models.GetTagTotal(maps)
+	tagService := tag_service.Tag{
+		Name: c.Query("name"),
+		State: state,
+		PageNum: util.GetPage(c),
+		PageSize: setting.AppSetting.PageSize,
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code": code,
-		"msg":  e.GetMsg(code),
-		"data": data,
-	})
+	total, err := tagService.Count()
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, e.ERROR_COUNT_TAG_FAIL, nil)
+	}
+
+	tags, err := tagService.GetAll()
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, e.ERROR_GET_TAGS_FAIL, nil)
+	}
+
+	data := make(map[string]interface{})
+	data["lists"] = tags
+	data["total"] = total
+
+	appG.Response(http.StatusOK, e.SUCCESS, data)
 }
 
 // AddTag

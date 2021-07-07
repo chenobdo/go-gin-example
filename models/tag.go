@@ -1,5 +1,7 @@
 package models
 
+import "github.com/jinzhu/gorm"
+
 type Tag struct {
 	Model
 
@@ -29,16 +31,33 @@ type Tag struct {
 //	return nil
 //}
 
-func GetTags(pageNum int, pageSize int, maps interface{}) (tags []Tag) {
-	db.Where(maps).Offset(pageNum).Limit(pageSize).Find(&tags)
+// GetTags gets a list of tags based on paging and constraints
+func GetTags(pageNum int, pageSize int, maps interface{}) ([]*Tag, error) {
+	var (
+		tags []*Tag
+		err error
+	)
 
-	return
+	if pageSize > 0 && pageNum > 0 {
+		err = db.Where(maps).Find(&tags).Offset(pageNum).Limit(pageSize).Error
+	} else {
+		err = db.Where(maps).Find(&tags).Error
+	}
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	return tags, nil
 }
 
-func GetTagTotal(maps interface{}) (count int) {
-	db.Model(&Tag{}).Where(maps).Count(&count)
+func GetTagTotal(maps interface{}) (int, error) {
+	var count int
+	if err := db.Model(&Tag{}).Where(maps).Count(&count).Error; err != nil {
+		return 0, err
+	}
 
-	return
+	return count, nil
 }
 
 func ExistTagByName(name string) bool {
