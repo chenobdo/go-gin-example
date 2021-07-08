@@ -3,6 +3,7 @@ package routers
 import (
 	_ "github.com/chenobdo/go-gin-example/docs"
 	"github.com/chenobdo/go-gin-example/pkg/export"
+	"github.com/chenobdo/go-gin-example/pkg/qrcode"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/pkg/upload"
 	"github.com/chenobdo/go-gin-example/routers/api"
@@ -29,6 +30,7 @@ func InitRoute() *gin.Engine {
 
 	r.StaticFS("/upload/images", http.Dir(upload.GetImageFullPath()))
 	r.StaticFS("/export", http.Dir(export.GetExcelFullPath()))
+	r.StaticFS("/qrcode", http.Dir(qrcode.GetQrCodeFullPath()))
 
 	r.GET("/auth", api.GetAuth)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
