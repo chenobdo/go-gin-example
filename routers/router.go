@@ -64,6 +64,7 @@ func InitRoute() *gin.Engine {
 		apiv1.POST("/articles/export", v1.ExportArticle)
 		//导入文章
 		apiv1.POST("/articles/import", v1.ImportArticle)
+		apiv1.POST("/articles/poster/generate", v1.GenerateArticlePoster)
 	}
 
 	return r

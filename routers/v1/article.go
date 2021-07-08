@@ -2,11 +2,13 @@ package v1
 
 import (
 	"github.com/astaxie/beego/validation"
+	"github.com/boombuler/barcode/qr"
 	"github.com/chenobdo/go-gin-example/app"
 	"github.com/chenobdo/go-gin-example/models"
 	"github.com/chenobdo/go-gin-example/pkg/e"
 	"github.com/chenobdo/go-gin-example/pkg/export"
 	"github.com/chenobdo/go-gin-example/pkg/logging"
+	"github.com/chenobdo/go-gin-example/pkg/qrcode"
 	"github.com/chenobdo/go-gin-example/pkg/setting"
 	"github.com/chenobdo/go-gin-example/pkg/util"
 	"github.com/chenobdo/go-gin-example/service/article_service"
@@ -15,6 +17,22 @@ import (
 	"log"
 	"net/http"
 )
+
+const(
+	QRCODE_URL = "https://github.com/EDDYCJY/blog#gin%E7%B3%BB%E5%88%97%E7%9B%AE%E5%BD%95"
+)
+
+func GenerateArticlePoster(c *gin.Context) {
+	appG := app.Gin{C: c}
+	qrc := qrcode.NewQrCode(QRCODE_URL, 300, 300, qr.M, qr.Auto)
+	path := qrcode.GetQrCodeFullPath()
+	_, _, err := qrc.Encode(path)
+	if err != nil {
+		appG.Response(http.StatusOK, e.ERROR, nil)
+	}
+
+	appG.Response(http.StatusOK, e.SUCCESS, nil)
+}
 
 func ImportArticle(c *gin.Context) {
 	appG := app.Gin{C: c}
